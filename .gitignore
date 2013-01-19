@@ -3,6 +3,9 @@
 # C extensions
 *.so
 
+.bzr
+.quickly
+
 # Packages
 *.egg
 *.egg-info

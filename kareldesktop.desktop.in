@@ -1,0 +1,8 @@
+[Desktop Entry]
+_Name=Kareldesktop
+_Comment=Kareldesktop application
+Categories=GNOME;Utility;
+Exec=kareldesktop
+Icon=kareldesktop
+Terminal=false
+Type=Application
