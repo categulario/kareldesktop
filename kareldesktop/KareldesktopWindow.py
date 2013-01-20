@@ -27,4 +27,8 @@ class KareldesktopWindow(Window):
         self.PreferencesDialog = PreferencesKareldesktopDialog
 
         # Code for other initialization actions should be added here.
-
+    def mostrar(self, algo):
+        print algo
+    
+    def drag(self):
+        print "wow"
