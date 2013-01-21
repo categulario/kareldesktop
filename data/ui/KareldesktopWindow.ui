@@ -55,6 +55,7 @@
     <property name="window_position">center</property>
     <property name="default_width">600</property>
     <property name="default_height">400</property>
+    <property name="hide_titlebar_when_maximized">True</property>
     <property name="icon">../media/kareldesktop.svg</property>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -96,6 +97,7 @@ del lenguaje de Karel</property>
                         <property name="label" translatable="yes">Salir</property>
                         <property name="use_underline">True</property>
                         <accelerator key="q" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="gtk_main_quit" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -357,7 +359,6 @@ del lenguaje de Karel</property>
                 <property name="label" translatable="yes">Nuevo Programa</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-new</property>
-                <signal name="clicked" handler="mostrar" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -571,11 +572,15 @@ del lenguaje de Karel</property>
           <object class="GtkPaned" id="paned1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="position">242</property>
+            <property name="position_set">True</property>
             <child>
               <object class="GtkPaned" id="paned2">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="orientation">vertical</property>
+                <property name="position">133</property>
+                <property name="position_set">True</property>
                 <child>
                   <object class="GtkScrolledWindow" id="scrolledwindow1">
                     <property name="visible">True</property>
@@ -589,6 +594,7 @@ del lenguaje de Karel</property>
                           <object class="GtkTextView" id="textview1">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="buffer">buffer_codigo</property>
                           </object>
                         </child>
                       </object>
@@ -742,12 +748,12 @@ del lenguaje de Karel</property>
                   <object class="GtkDrawingArea" id="drawingarea1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <signal name="show" handler="mostrar" swapped="no"/>
-                    <signal name="touch-event" handler="mostrar" swapped="no"/>
-                    <signal name="drag-begin" handler="drag" swapped="no"/>
+                    <property name="events">GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>
+                    <signal name="button-press-event" handler="mundo_click" swapped="no"/>
+                    <signal name="draw" handler="dibuja_mundo" swapped="no"/>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
+                    <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>
