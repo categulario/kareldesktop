@@ -52,6 +52,8 @@ class KareldesktopWindow(Window):
 
         context.clip()
 
+        print dir(context)
+
         tamanio_lienzo = coordenada(rect.width-20, rect.height-20)
 
         context.rectangle(20, 0, tamanio_lienzo.x, tamanio_lienzo.y)
@@ -73,20 +75,23 @@ class KareldesktopWindow(Window):
                 context.set_source_rgb(.4, .4, .4)
                 context.fill_preserve()
         #Dibujar a Karel
-        context.move_to ( origen.x, origen.y);
-        context.line_to ( 230.4, 230.4);
-        context.rel_line_to ( -102.4, 0.0);
-        context.curve_to ( 51.2, 230.4, 51.2, 128.0, 128.0, 128.0);
+        context.move_to ( origen.x, origen.y+8 );
+        context.line_to ( origen.x+10, origen.y );
+        context.line_to ( origen.x+20, origen.y+8 );
+        context.line_to ( origen.x+15, origen.y+8 );
+        context.line_to ( origen.x+15, origen.y+18 );
+        context.line_to ( origen.x+5, origen.y+18 );
+        context.line_to ( origen.x+5, origen.y+8 );
         context.close_path ();
 
-        context.move_to ( 64.0, 25.6);
-        context.rel_line_to ( 51.2, 51.2);
-        context.rel_line_to ( -51.2, 51.2);
-        context.rel_line_to ( -51.2, -51.2);
-        context.close_path ();
+        #~ context.move_to ( 64.0, 25.6);
+        #~ context.rel_line_to ( 51.2, 51.2);
+        #~ context.rel_line_to ( -51.2, 51.2);
+        #~ context.rel_line_to ( -51.2, -51.2);
+        #~ context.close_path ();
 
         context.set_line_width ( 10.0);
-        context.set_source_rgb ( 0, 0, 1);
+        #context.set_source_rgb ( 0, 0, 1);
         context.fill_preserve ();
 
     def mundo_click(self, a, event):
