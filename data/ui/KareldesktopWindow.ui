@@ -89,6 +89,16 @@ del lenguaje de Karel</property>
                       </object>
                     </child>
                     <child>
+                      <object class="GtkCheckMenuItem" id="checkStrongLogic">
+                        <property name="use_action_appearance">False</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="tooltip_text" translatable="yes">Elimina las negaciones de la sintaxis de Karel</property>
+                        <property name="label" translatable="yes">Lógica Fuerte</property>
+                        <property name="use_underline">True</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkMenuItem" id="menu_salir">
                         <property name="use_action_appearance">False</property>
                         <property name="visible">True</property>
@@ -594,6 +604,7 @@ del lenguaje de Karel</property>
                           <object class="GtkTextView" id="textview1">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
+                            <property name="has_focus">True</property>
                             <property name="buffer">buffer_codigo</property>
                           </object>
                         </child>

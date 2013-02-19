@@ -94,6 +94,27 @@ class kworld(object):
             if not self.carga_archivo(archivo):
                 raise KarelException("El archivo de mundo que me diste esta dañado!")
 
+    def establece_karel(self, posicion=(1, 1), orientacion='norte'):
+        """pone a karel en algun lugar especifico"""
+        self.mundo['karel']['posicion'] = posicion
+        self.mundo['karel']['orientacion'] = orientacion
+
+    def establece_mochila(self, cantidad):
+        """Establece los zumbadores en la mochila de karel a cierta cantidad"""
+        if cantidad == 'inf' or cantidad == '-1':
+            self.mundo['karel']['mochila'] = -1
+        elif type(cantidad) == int:
+            if cantidad >= 0:
+                self.mundo['karel']['mochila'] = cantidad
+            else:
+                raise KarelException('Esta no es una cantidad apropiada de zumbadores')
+        else:
+            raise KarelException('Deberías consultar a un psiquiatra')
+
+    def obten_mochila(self):
+        """Obtiene la cantidad de zumbadores en la mochila de karel"""
+        return self.mundo['karel']['mochila']
+
     def conmuta_pared (self, coordenadas, orientacion):
         """ Agrega una pared al mundo, si es que está permitido, el
         atributo 'coordenadas' es una tupla con la fila y columna de la
@@ -317,12 +338,12 @@ class kworld(object):
 
     def algun_zumbador_en_la_mochila(self):
         """ Determina si karel tiene algun zumbador en la mochila """
-        if self.mundo['karel']['mochila'] > 0:
+        if self.mundo['karel']['mochila'] > 0 or self.mundo['karel']['mochila'] == -1:
             return True
         else:
             return False
 
-    def exporta_mundo (self, nombrearchivo, expandir=False):
+    def exporta_mundo (self, nombrearchivo=False, expandir=False):
         """ Exporta las condiciones actuales del mundo usando algun
         lenguaje de marcado """
         mundo = {
@@ -344,12 +365,26 @@ class kworld(object):
                 'zumbadores': valor['zumbadores'],
                 'paredes': list(valor['paredes'])
             })
-        f = file(nombrearchivo, 'w')
-        if expandir:
-            f.write(json.dumps(mundo, indent=2))
+        if nombrearchivo:
+            f = file(nombrearchivo, 'w')
+            if expandir:
+                f.write(json.dumps(mundo, indent=2))
+            else:
+                f.write(json.dumps(mundo))
+            f.close()
         else:
-            f.write(json.dumps(mundo))
-        f.close()
+            return mundo
+
+    def exporta_casillas(self):
+        casillas = []
+        for llave, valor in self.mundo['casillas'].iteritems():
+            casillas.append({
+                    'fila': llave[0],
+                    'columna': llave[1],
+                    'zumbadores': valor['zumbadores'],
+                    'paredes': list(valor['paredes'])
+                })
+        return casillas
 
     def carga_casillas (self, casillas):
         """ Carga las casillas de un diccionario dado. """
@@ -417,7 +452,7 @@ class kworld(object):
             'casillas': dict()
         }
 
-    def __str__ (self):
+    def __str__ (self, filas=16, columnas=35):
         """Imprime bien bonito la primera porción de mundo"""
         def num_digits(a):
             if a == -1:
@@ -428,6 +463,14 @@ class kworld(object):
                 return 2
             else:
                 return 3
+        def num(numero):
+            if 0<=numero<=9:
+                return " %d "%numero
+            elif 10<=numero<=99:
+                return " %d"%numero
+            else:
+                "%d"%numero
+        columnas+=1
         karel  = {
             'norte': '^',
             'este': '>',
@@ -436,9 +479,9 @@ class kworld(object):
         }
         #s = " " + "   +"*13
         s = ""
-        for i in xrange(8, 0, -1):
+        for i in xrange(filas, 0, -1):
             s += "\n    +"
-            for j in xrange(1, 13):
+            for j in xrange(1, columnas):
                 if self.mundo['casillas'].has_key((i, j)):
                     if 'norte' in self.mundo['casillas'][(i,j)]['paredes']:
                         s += "---+"
@@ -446,8 +489,8 @@ class kworld(object):
                         s += "   +"
                 else:
                     s += "   +"
-            s += "\n  %d |"%i
-            for j in xrange(1, 13):
+            s += "\n %s|"%num(i)
+            for j in xrange(1, columnas):
                 if self.mundo['karel']['posicion'] == (i, j):
                     if self.mundo['casillas'].has_key((i, j)):
                         if 'este' in self.mundo['casillas'][(i,j)]['paredes']:
@@ -481,13 +524,17 @@ class kworld(object):
                             s += "    "
                 else:
                     s += "    "
-        s += "\n    +" + "---+"*12
+        s += "\n    +" + "---+"*(columnas-1)
         s += '\n     '
-        for i in xrange(1, 13):
+        for i in xrange(1, columnas):
             if num_digits(i)==1:
                 s += " %d  "%i
             else:
                 s += "%d  "%i
+        if self.obten_mochila() == -1:
+            s += '\n mochila: infititos'
+        else:
+            s += '\n mochila: %d'%self.obten_mochila()
         return s
 
 

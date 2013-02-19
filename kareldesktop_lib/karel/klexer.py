@@ -36,7 +36,7 @@ class klexer(object):
 
         self.numeros = "0123456789"
         self.palabras = "abcdfeghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
-        self.simbolos = "(){}*/;," #Simbolos permitidos para esta sintaxis
+        self.simbolos = "(){}*/;,|&!" #Simbolos permitidos para esta sintaxis
         self.espacios = " \n\r\t"
 
         self.caracteres = self.numeros+self.palabras+self.simbolos+self.espacios
@@ -46,7 +46,6 @@ class klexer(object):
         self.abrir_comentario = '' #Indica cómo fue abierto un comentario
 
         self.pila_tokens = [] #Pila de tokens por si me lo devuelven
-        self.pila_chars = [] #Pila de caracteres
         self.char_pushed = False #Indica cuando un caracter ha sido puesto en la pila
 
         self.linea = 1 #El número de linea
@@ -56,17 +55,20 @@ class klexer(object):
         self.estado = self.ESTADO_ESPACIO
         self.posicion = ktoken.POSICION_INICIO
 
+        self.sintaxis = 'pascal' #para la gestion de los comentarios
+
         self.debug = debug
+        self.caracter_actual = self.lee_caracter()
         if self.debug:
             print "leyendo archivo '%s'"%self.nombre_archivo
 
     def lee_caracter(self):
         """Lee un caracter de la fuente o devuelve uno de la pila si no
         está vacía"""
+        self.ultimo_caracter = self.caracter_actual
         if len(self.pila_chars)!=0:
             return self.pila_chars.pop()
         else:
-            self.ultimo_caracter = self.caracter_actual
             return self.archivo.read(1)
 
     def get_token(self):
@@ -81,15 +83,9 @@ class klexer(object):
         """Empuja un token en la pila"""
         self.pila_tokens.append(token)
 
-    def push_char(self, char):
-        """Pone un caracter en la pila de caracteres"""
-        self.pila_chars.append(char)
-        self.char_pushed = True
-
     def lee_token(self):
         """Lee un token del archivo"""
         while True:
-            self.caracter_actual = self.lee_caracter()
             self.columna += 1
             if not self.caracter_actual:
                 break
@@ -105,6 +101,8 @@ class klexer(object):
                         self.estado = self.ESTADO_ESPACIO
                     if self.caracter_actual == '}' and self.abrir_comentario == '{':
                         self.estado = self.ESTADO_ESPACIO
+                    if self.caracter_actual == '/' and self.abrir_comentario == '/*' and self.ultimo_caracter == '*':
+                        self.estado = self.ESTADO_ESPACIO
                 elif self.caracter_actual == '\n':
                     self.tiene_cambio_de_linea = True
             elif self.estado == self.ESTADO_ESPACIO:
@@ -119,8 +117,8 @@ class klexer(object):
                     self.token += self.caracter_actual
                     self.estado = self.ESTADO_PALABRA
                 elif self.caracter_actual in self.simbolos:
-                    self.push_char(self.caracter_actual) #Podria ser algo valido como ();,
                     self.estado = self.ESTADO_SIMBOLO
+                    continue
                 elif self.caracter_actual == '\n':
                     self.tiene_cambio_de_linea = True
             elif self.estado == self.ESTADO_NUMERO:
@@ -134,7 +132,6 @@ class klexer(object):
                     raise KarelException("Este token no parece valido, linea %d columna %d"%(self.linea, self.columna))
                 elif self.caracter_actual in self.simbolos:
                     self.estado = self.ESTADO_SIMBOLO
-                    self.push_char(self.caracter_actual)
                     break
                 elif self.caracter_actual in self.espacios:
                     if self.caracter_actual == '\n':
@@ -150,7 +147,6 @@ class klexer(object):
                     self.token += self.caracter_actual
                 elif self.caracter_actual in self.simbolos:
                     self.estado = self.ESTADO_SIMBOLO
-                    self.push_char(self.caracter_actual)
                     break
                 elif self.caracter_actual in self.espacios:
                     if self.caracter_actual == '\n':
@@ -162,43 +158,62 @@ class klexer(object):
                     print "Encontré", repr(self.caracter_actual), "en estado símbolo"
                 if self.caracter_actual not in self.caracteres:
                     raise KarelException("Caracter desconocido en la linea %d columna %d"%(self.linea, self.columna))
-                if self.caracter_actual == '{':
+                if self.caracter_actual == '{' and self.sintaxis=='pascal':
                     self.abrir_comentario = '{'
                     self.estado = self.ESTADO_COMENTARIO
+                    if self.token:
+                        break
                 elif self.caracter_actual in self.numeros:
                     self.estado = self.ESTADO_NUMERO
-                    self.push_char(self.caracter_actual)
                     if self.token:
                         break
-                    else:
-                        continue
                 elif self.caracter_actual in self.palabras:
                     self.estado = self.ESTADO_PALABRA
-                    self.push_char(self.caracter_actual)
                     if self.token:
                         break
-                elif self.caracter_actual in self.simbolos:
-                    if self.ultimo_caracter == "(":
-                        if self.caracter_actual == '*':
-                            self.token = ''
-                            self.estado = self.ESTADO_COMENTARIO
-                            self.abrir_comentario = '(*'
-                            continue
-                        else:
-                            self.push_char(self.caracter_actual)
+                elif self.caracter_actual in self.simbolos: #Encontramos un símbolo en estado símbolo
+                    if self.caracter_actual == '/' and self.ultimo_caracter == '/':
+                        self.archivo.readline()
+                        self.estado = self.ESTADO_ESPACIO
+                        if self.token.endswith('/'):
+                            self.token = self.token[:-1]
+                        if self.token:
+                            self.caracter_actual = self.lee_caracter()
                             break
-                    elif self.caracter_actual != '(': #el único símbolo con continuación
+                    elif self.caracter_actual == '*' and self.ultimo_caracter == '/':
+                        self.estado = self.ESTADO_COMENTARIO
+                        self.abrir_comentario = '/*'
+                        if self.token.endswith('/'):
+                            self.token = self.token[:-1]
+                        if self.token:
+                            self.caracter_actual = self.lee_caracter()
+                            break
+                    elif self.caracter_actual == '*' and self.ultimo_caracter == '(' and self.sintaxis == 'pascal':
+                        self.estado = self.ESTADO_COMENTARIO
+                        self.abrir_comentario = '(*'
+                        if self.token.endswith('('):
+                            self.token = self.token[:-1]
+                        if self.token:
+                            self.caracter_actual = self.lee_caracter()
+                            break
+                    elif self.caracter_actual in ['(', ';', ')', '{', '}', '!']: #Caracteres que viven solos
+                        self.estado = self.ESTADO_ESPACIO
+                        if self.token:
+                            break
                         self.token += self.caracter_actual
-                        #  self.push_char(self.caracter_actual)
+                        self.caracter_actual = self.lee_caracter()
                         break
                     else:
                         self.token += self.caracter_actual
-                        continue
                 elif self.caracter_actual in self.espacios:
                     if self.caracter_actual == '\n':
                         self.tiene_cambio_de_linea = True
                     self.estado = self.ESTADO_ESPACIO
-                    #break #Terminamos este token
+                    if self.token:
+                        break
+                else:
+                    raise KarelException("Caracter desconocido en la linea %d columna %d"%(self.linea, self.columna))
+            self.caracter_actual = self.lee_caracter()
         token = self.token
         self.token = ''
         return ktoken(token, self.linea, self.columna, self.posicion)
@@ -220,7 +235,7 @@ if __name__ == '__main__':
     debug=0
     if '-d' in sys.argv:
         debug=1
-    if len(sys.argv)>1:
+    if len(sys.argv)>1 and sys.argv[1] != '-d':
         lexer = klexer(open(sys.argv[1]), sys.argv[1], debug=debug)
     else:
         lexer = klexer(debug=debug)

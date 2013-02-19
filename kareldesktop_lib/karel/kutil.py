@@ -7,7 +7,7 @@ from collections import deque
 
 __all__ = ['KarelException', 'xml_prepare']
 
-class ktoken(object): #TODO determinar usabilidad
+class ktoken(object):
     """Define un token de la gramática de karel. Esencialmente un token
     es un trozo de cadena, sin embargo para esta gramática podría ser un"""
     #TODO implementar la posición del token
@@ -16,10 +16,13 @@ class ktoken(object): #TODO determinar usabilidad
     POSICION_MEDIO = 'med'
     def __init__(self, s_token, linea, columna, posicion):
         """Inicializa el token con un token cadena"""
-        self.token = s_token.lower()
+        self.token = s_token
         self.linea = linea
         self.columna = columna
         self.posicion = posicion
+
+    def lower(self):
+        self.token = self.token.lower()
 
     def startswith(self, cad):
         return self.token.startswith(cad)

@@ -53,7 +53,7 @@ def merge (lista_llaves, lista_valores):
 class krunner:
     """ Ejecuta codigos compilados de Karel hasta el final o hasta
     encontrar un error relacionado con las condiciones del mundo. """
-    def __init__ (self, programa_compilado, mundo=None, limite_recursion=65000, limite_iteracion=65000, limite_ejecucion=200000):
+    def __init__ (self, programa_compilado, mundo=None, limite_recursion=65000, limite_iteracion=65000, limite_ejecucion=200000, debug=False):
         """ Inicializa el ejecutor dados un codigo fuente compilado y un
         mundo, tambien establece el limite para la recursion sobre una
         funcion antes de botar un error stack_overflow."""
@@ -80,6 +80,8 @@ class krunner:
         self.profundidad = 0 #El punto inicial en la recursion
         self.estado = "Ok" #El estado en que se encuentra
         self.mensaje = "" #Mensaje con que termina la ejecucion
+        #Debug
+        self.debug = debug
 
     def expresion_entera (self, valor, diccionario_variables):
         """ Obtiene el resultado de una evaluacion entera y lo devuelve
@@ -189,24 +191,34 @@ class krunner:
                 if type(instruccion) == dict:
                     #Se trata de una estructura de control o una funcion definida
                     if instruccion.has_key('si'):
+                        if self.debug:
+                            print 'si'
                         if self.termino_logico(instruccion['si']['argumento']['o'], self.diccionario_variables):
                             self.indice += 1 #Avanzamos a la siguiente posicion en la cinta
                         else:#nos saltamos el si, vamos a la siguiente casilla, que debe ser un sino o la siguiente instruccion
                             self.indice = instruccion['si']['fin']+1
                         self.ejecucion += 1
                     elif instruccion.has_key('sino'): #Llegamos a un sino, procedemos, no hay de otra
+                        if self.debug:
+                            print 'sino'
                         self.indice += 1
                         self.ejecucion += 1
                     elif instruccion.has_key('repite'):
+                        if self.debug:
+                            print 'repite', instruccion['repite']['argumento']
                         if not self.pila_estructuras.en_tope(instruccion['repite']['id']):#Se está llegando a la estructura al menos por segunda vez
                             argumento = self.expresion_entera(instruccion['repite']['argumento'], self.diccionario_variables)
                             if argumento < 0:
                                 raise KarelException(u"WeirdNumberException: Estás intentando que karel repita un número negativo de veces")
-                            instruccion['repite'].update({
-                                'cuenta': 0,
-                                'argumento': argumento
-                            })
-                            self.pila_estructuras.append(instruccion)
+                            bucle = {
+                                'repite': {
+                                    'cuenta': 0,
+                                    'argumento': argumento,
+                                    'id': instruccion['repite']['id'],
+                                    'fin': instruccion['repite']['fin']
+                                }
+                            }
+                            self.pila_estructuras.append(bucle)
                         if self.pila_estructuras.top()['repite']['argumento']>0:
                             if self.pila_estructuras[-1]['repite']['cuenta'] == self.limite_iteracion:
                                 raise KarelException('LoopLimitExceded: hay un bucle que se cicla')
@@ -218,6 +230,8 @@ class krunner:
                             self.pila_estructuras.pop()
                         self.ejecucion += 1
                     elif instruccion.has_key('mientras'):
+                        if self.debug:
+                            print 'mientras'
                         if not self.pila_estructuras.en_tope(instruccion['mientras']['id']):#Se está llegando a la estructura al menos por segunda vez
                             instruccion['mientras'].update({
                                 'cuenta': 0
@@ -233,6 +247,8 @@ class krunner:
                             self.pila_estructuras.pop()
                         self.ejecucion += 1
                     elif instruccion.has_key('fin'):#Algo termina aqui
+                        if self.debug:
+                            print 'fin', instruccion['fin']['estructura']
                         if instruccion['fin']['estructura'] in ['mientras', 'repite']:
                             self.indice = instruccion['fin']['inicio']
                         elif instruccion['fin']['estructura'] == 'si':
@@ -242,14 +258,16 @@ class krunner:
                         else:#fin de una funcion
                             nota = self.pila_funciones.pop()#Obtenemos la nota de donde nos hemos quedado
                             self.indice = nota['posicion']+1
-                            self.diccionario_variables = nota['self.diccionario_variables']
+                            self.diccionario_variables = nota['diccionario_variables']
                     else: #Se trata la llamada a una función
+                        if self.debug:
+                            print instruccion['instruccion']['nombre']
                         if len(self.pila_funciones) == self.limite_recursion:
                             raise KarelException('StackOverflow: Karel ha excedido el límite de recursión')
                         #Hay que guardar la posición actual y el diccionario de variables en uso
                         self.pila_funciones.append({
                             'posicion': self.indice,
-                            'self.diccionario_variables': self.diccionario_variables
+                            'diccionario_variables': self.diccionario_variables
                         })
                         # Lo que prosigue es ir a la definición de la función
                         self.indice = self.ejecutable['indice_funciones'][instruccion['instruccion']['nombre']]+1
@@ -264,6 +282,8 @@ class krunner:
                         self.ejecucion += 1
                 else:
                     #Es una instruccion predefinida de Karel
+                    if self.debug:
+                        print instruccion
                     if instruccion == 'avanza':
                         if not self.mundo.avanza():
                             raise KarelException('Karel se ha estrellado con una pared!')
@@ -287,7 +307,7 @@ class krunner:
                     elif instruccion == 'sal-de-instruccion':
                         nota = self.pila_funciones.pop()#Obtenemos la nota de donde nos hemos quedado
                         self.indice = nota['posicion']+1
-                        self.diccionario_variables = nota['self.diccionario_variables']
+                        self.diccionario_variables = nota['diccionario_variables']
                     elif instruccion == 'sal-de-bucle':
                         bucle = self.pila_estructuras.pop()
                         self.indice = bucle[bucle.keys()[0]]['fin']+1
