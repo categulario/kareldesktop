@@ -54,13 +54,27 @@ class KareldesktopWindow(Window):
 
         itera_columnas = int(tamanio_lienzo.x/20 + math.ceil((tamanio_lienzo.x%20)/20.))
         itera_filas = int(tamanio_lienzo.y/20 + math.ceil((tamanio_lienzo.y%20)/20.))
-        for i in xrange(itera_columnas):
+        for i in xrange(itera_columnas): #Cuadrados de las esquinas, creo
             for j in xrange(itera_filas):
                 x = origen.x+20*i
                 y = origen.y-20*j
                 context.rectangle(x-2, y+16, 6, 6)
                 context.set_source_rgb(.4, .4, .4)
                 context.fill()
+        for i in xrange(itera_filas):
+            context.select_font_face('monospace')
+            context.set_font_size(14) # em-square height is 90 pixels
+            context.move_to(2, rect.height-(25+i*20)) # move to point (x, y) = (10, 90)
+            context.set_source_rgb(0, 0, 0)
+            context.show_text(str(i+1))
+
+        for i in xrange(itera_columnas):
+            context.select_font_face('monospace')
+            context.set_font_size(14) # em-square height is 90 pixels
+            context.move_to(23+20*i, rect.height-5) # move to point (x, y) = (10, 90)
+            context.set_source_rgb(0, 0, 0)
+            context.show_text(str(i+1))
+
         #Dibujar a Karel
         context.set_source_rgb(0, 0, 1)
         if self.world.orientado_al('norte'):

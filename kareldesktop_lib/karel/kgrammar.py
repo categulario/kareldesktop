@@ -523,7 +523,8 @@ class kgrammar:
                 raise KarelException("Se esperaba ')'")
         else:
             retornar_valor = self.boolean_function()
-            self.empty_arguments()
+            if self.token_actual == '(':
+                self.empty_arguments()
 
         return retornar_valor
 

@@ -66,10 +66,7 @@ class klexer(object):
         """Lee un caracter de la fuente o devuelve uno de la pila si no
         está vacía"""
         self.ultimo_caracter = self.caracter_actual
-        if len(self.pila_chars)!=0:
-            return self.pila_chars.pop()
-        else:
-            return self.archivo.read(1)
+        return self.archivo.read(1)
 
     def get_token(self):
         """Obtiene el siguiente token. Si la pila tiene tokens le quita

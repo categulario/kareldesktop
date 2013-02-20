@@ -72,12 +72,11 @@ class krunner:
         self.limite_recursion = limite_recursion
         self.limite_iteracion = limite_iteracion
         self.limite_ejecucion = limite_ejecucion
-        self.pila_funciones = kstack() #La pila de llamadas a funciones
-        self.pila_estructuras = kstack() #pila de llamadas a estructuras
+        self.pila = kstack() #La pila de funciones
+        self.conteo_bucles = dict()
         #Las anteriores cantidades limitan que tan hondo se puede llegar
         #mediante recursion, y que tanto puede iterar un bucle, esto para
         #evitar problemas al evaluar codigos en un servidor.
-        self.profundidad = 0 #El punto inicial en la recursion
         self.estado = "Ok" #El estado en que se encuentra
         self.mensaje = "" #Mensaje con que termina la ejecucion
         #Debug
@@ -206,45 +205,39 @@ class krunner:
                     elif instruccion.has_key('repite'):
                         if self.debug:
                             print 'repite', instruccion['repite']['argumento']
-                        if not self.pila_estructuras.en_tope(instruccion['repite']['id']):#Se está llegando a la estructura al menos por segunda vez
+                        if not self.conteo_bucles.has_key((instruccion['repite']['id'], len(self.pila))): #Estás llegando al bucle por primera vez
                             argumento = self.expresion_entera(instruccion['repite']['argumento'], self.diccionario_variables)
                             if argumento < 0:
                                 raise KarelException(u"WeirdNumberException: Estás intentando que karel repita un número negativo de veces")
-                            bucle = {
-                                'repite': {
-                                    'cuenta': 0,
-                                    'argumento': argumento,
-                                    'id': instruccion['repite']['id'],
-                                    'fin': instruccion['repite']['fin']
-                                }
-                            }
-                            self.pila_estructuras.append(bucle)
-                        if self.pila_estructuras.top()['repite']['argumento']>0:
-                            if self.pila_estructuras[-1]['repite']['cuenta'] == self.limite_iteracion:
+                            self.conteo_bucles.update({(instruccion['repite']['id'], len(self.pila)):{
+                                'cuenta': 0,
+                                'argumento': argumento
+                            }}) #Cuenta las ejecuciones para este bucle
+                        if self.conteo_bucles[(instruccion['repite']['id'], len(self.pila))]['argumento']>0:
+                            if self.conteo_bucles[(instruccion['repite']['id'], len(self.pila))]['cuenta'] == self.limite_iteracion:
                                 raise KarelException('LoopLimitExceded: hay un bucle que se cicla')
                             self.indice += 1
-                            self.pila_estructuras[-1]['repite']['argumento'] -= 1
-                            self.pila_estructuras[-1]['repite']['cuenta'] += 1
+                            self.conteo_bucles[(instruccion['repite']['id'], len(self.pila))]['argumento'] -= 1
+                            self.conteo_bucles[(instruccion['repite']['id'], len(self.pila))]['cuenta'] += 1
                         else:#nos vamos al final y extraemos el repite de la pila
-                            self.indice = self.pila_estructuras.top()['repite']['fin']+1
-                            self.pila_estructuras.pop()
+                            self.indice = instruccion['repite']['fin']+1
+                            del self.conteo_bucles[(instruccion['repite']['id'], len(self.pila))]
                         self.ejecucion += 1
                     elif instruccion.has_key('mientras'):
                         if self.debug:
                             print 'mientras'
-                        if not self.pila_estructuras.en_tope(instruccion['mientras']['id']):#Se está llegando a la estructura al menos por segunda vez
-                            instruccion['mientras'].update({
+                        if not self.conteo_bucles.has_key((instruccion['mientras']['id'], len(self.pila))):
+                            self.conteo_bucles.update({(instruccion['mientras']['id'], len(self.pila)):{
                                 'cuenta': 0
-                            })
-                            self.pila_estructuras.append(instruccion)
+                            }}) #Cuenta las ejecuciones para este bucle
                         if self.termino_logico(instruccion['mientras']['argumento']['o'], self.diccionario_variables):#Se cumple la condición del mientras
-                            if self.pila_estructuras[-1]['mientras']['cuenta'] == self.limite_iteracion:
+                            if self.conteo_bucles[(instruccion['mientras']['id'], len(self.pila))]['cuenta'] == self.limite_iteracion:
                                 raise KarelException('LoopLimitExceded: hay un bucle que se cicla')
                             self.indice += 1
-                            self.pila_estructuras[-1]['mientras']['cuenta'] += 1
+                            self.conteo_bucles[(instruccion['mientras']['id'], len(self.pila))]['cuenta'] += 1
                         else:#nos vamos al final
-                            self.indice = self.pila_estructuras.top()['mientras']['fin']+1
-                            self.pila_estructuras.pop()
+                            self.indice = instruccion['mientras']['fin']+1
+                            del self.conteo_bucles[(instruccion['mientras']['id'], len(self.pila))]
                         self.ejecucion += 1
                     elif instruccion.has_key('fin'):#Algo termina aqui
                         if self.debug:
@@ -256,16 +249,16 @@ class krunner:
                         elif instruccion['fin']['estructura'] == 'sino':
                             self.indice += 1
                         else:#fin de una funcion
-                            nota = self.pila_funciones.pop()#Obtenemos la nota de donde nos hemos quedado
+                            nota = self.pila.pop()#Obtenemos la nota de donde nos hemos quedado
                             self.indice = nota['posicion']+1
                             self.diccionario_variables = nota['diccionario_variables']
                     else: #Se trata la llamada a una función
                         if self.debug:
                             print instruccion['instruccion']['nombre']
-                        if len(self.pila_funciones) == self.limite_recursion:
+                        if len(self.pila) == self.limite_recursion:
                             raise KarelException('StackOverflow: Karel ha excedido el límite de recursión')
                         #Hay que guardar la posición actual y el diccionario de variables en uso
-                        self.pila_funciones.append({
+                        self.pila.append({
                             'posicion': self.indice,
                             'diccionario_variables': self.diccionario_variables
                         })
@@ -305,7 +298,7 @@ class krunner:
                         self.mensaje = 'Ejecucion terminada'
                         return 'TERMINADO'
                     elif instruccion == 'sal-de-instruccion':
-                        nota = self.pila_funciones.pop()#Obtenemos la nota de donde nos hemos quedado
+                        nota = self.pila.pop()#Obtenemos la nota de donde nos hemos quedado
                         self.indice = nota['posicion']+1
                         self.diccionario_variables = nota['diccionario_variables']
                     elif instruccion == 'sal-de-bucle':
