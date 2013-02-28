@@ -67,7 +67,7 @@ def rotado (cardinal):
 class kworld(object):
     """ Representa el mundo de Karel """
 
-    def __init__ (self, filas=100, columnas=100, karel_pos=(1,1), orientacion='norte', mochila=0, casillas=dict(), archivo=None):
+    def __init__ (self, filas=100, columnas=100, karel_pos=(1,1), orientacion='norte', mochila=0, casillas=dict(), archivo=None, casillas_evaluacion=False):
         """ Inicializa el mundo, con Karel en la esquina 1,1 del mundo
         orientado al norte.
 
@@ -90,9 +90,13 @@ class kworld(object):
                 },
                 'casillas': casillas
             }
+        self.casillas_evaluacion = casillas_evaluacion #Indica cuando se trabaja con un mundo de evaluación
         if archivo is not None and isinstance(archivo, file):
             if not self.carga_archivo(archivo):
                 raise KarelException("El archivo de mundo que me diste esta dañado!")
+
+    def posicion_karel(self):
+        return self.mundo['karel']['posicion']
 
     def establece_karel(self, posicion=(1, 1), orientacion='norte'):
         """pone a karel en algun lugar especifico"""
@@ -110,6 +114,27 @@ class kworld(object):
                 raise KarelException('Esta no es una cantidad apropiada de zumbadores')
         else:
             raise KarelException('Deberías consultar a un psiquiatra')
+
+    def obten_casilla(self, coordenadas):
+        """Obtiene una casilla del mundo y la devuelve así a lo sobres"""
+        casilla = {
+            'zumbadores': 0,
+            'paredes': set()
+        }
+        if coordenadas[0] == 1: #Primera fila, pared izquierda
+            casilla['paredes'].add('sur')
+        if coordenadas[0] == 100:
+            casilla['paredes'].add('norte')
+        if coordenadas[1] == 1: #primera columna
+            casilla['paredes'].add('oeste')
+        if coordenadas[1] == 100:
+            casilla['paredes'].add('este')
+
+        if self.mundo['casillas'].has_key(coordenadas):
+            casilla['zumbadores'] = self.mundo['casillas'][(coordenadas)]['zumbadores']
+            casilla['paredes'] = casilla['paredes'] | self.mundo['casillas'][(coordenadas)]['paredes']
+
+        return casilla
 
     def obten_mochila(self):
         """Obtiene la cantidad de zumbadores en la mochila de karel"""
@@ -162,9 +187,9 @@ class kworld(object):
                     #del lado opuesto
                     self.mundo['casillas'][casilla_opuesta]['paredes'].remove(posicion_opuesta)
             #Operaciones de limpieza para ahorrar memoria
-            if not (self.mundo['casillas'][coordenadas]['paredes'] or self.mundo['casillas'][coordenadas]['zumbadores']):
+            if not (self.mundo['casillas'][coordenadas]['paredes'] or self.mundo['casillas'][coordenadas]['zumbadores']) and not self.casillas_evaluacion:
                 del self.mundo['casillas'][coordenadas]
-            if not (self.mundo['casillas'][casilla_opuesta]['paredes'] or self.mundo['casillas'][casilla_opuesta]['zumbadores']):
+            if not (self.mundo['casillas'][casilla_opuesta]['paredes'] or self.mundo['casillas'][casilla_opuesta]['zumbadores']) and not self.casillas_evaluacion:
                 del self.mundo['casillas'][casilla_opuesta]
 
     def pon_zumbadores (self, posicion, cantidad):
@@ -180,7 +205,7 @@ class kworld(object):
                     }
                 })
             #Limpiamos la memoria si es necesario
-            if not (self.mundo['casillas'][posicion]['paredes'] or self.mundo['casillas'][posicion]['zumbadores']):
+            if not (self.mundo['casillas'][posicion]['paredes'] or self.mundo['casillas'][posicion]['zumbadores']) and not self.casillas_evaluacion:
                 del self.mundo['casillas'][posicion]
 
     def avanza (self, test=False):
@@ -245,7 +270,7 @@ class kworld(object):
         else:
             return False
 
-    def frente_libre(self):
+    def frente_libre (self):
         """ Determina si Karel tiene el frente libre """
         direccion = self.mundo['karel']['orientacion']
         posicion = self.mundo['karel']['posicion']
@@ -329,14 +354,14 @@ class kworld(object):
         else:
             return False
 
-    def orientado_al(self, direccion):
+    def orientado_al (self, direccion):
         """ Determina si karel esta orientado al norte """
         if self.mundo['karel']['orientacion'] == direccion:
             return True
         else:
             return False
 
-    def algun_zumbador_en_la_mochila(self):
+    def algun_zumbador_en_la_mochila (self):
         """ Determina si karel tiene algun zumbador en la mochila """
         if self.mundo['karel']['mochila'] > 0 or self.mundo['karel']['mochila'] == -1:
             return True
@@ -375,7 +400,7 @@ class kworld(object):
         else:
             return mundo
 
-    def exporta_casillas(self):
+    def exporta_casillas (self):
         casillas = []
         for llave, valor in self.mundo['casillas'].iteritems():
             casillas.append({
@@ -383,6 +408,16 @@ class kworld(object):
                     'columna': llave[1],
                     'zumbadores': valor['zumbadores'],
                     'paredes': list(valor['paredes'])
+                })
+        return casillas
+
+    def exporta_casillas_comparacion (self):
+        casillas = []
+        for llave, valor in self.mundo['casillas'].iteritems():
+            casillas.append({
+                    'fila': llave[0],
+                    'columna': llave[1],
+                    'zumbadores': valor['zumbadores']
                 })
         return casillas
 
@@ -452,7 +487,7 @@ class kworld(object):
             'casillas': dict()
         }
 
-    def __str__ (self, filas=16, columnas=35):
+    def __str__ (self, filas=26, columnas=28):
         """Imprime bien bonito la primera porción de mundo"""
         def num_digits(a):
             if a == -1:
@@ -500,7 +535,7 @@ class kworld(object):
                     else:
                         s+= " %s  "%karel[self.mundo['karel']['orientacion']]
                 elif self.mundo['casillas'].has_key((i, j)):
-                    if self.mundo['casillas'][(i, j)]['zumbadores']:
+                    if self.mundo['casillas'][(i, j)]['zumbadores'] or (self.casillas_evaluacion):
                         digitos = num_digits(self.mundo['casillas'][(i, j)]['zumbadores'])
                         if digitos  == 1:
                             if 'este' in self.mundo['casillas'][(i,j)]['paredes']:
@@ -560,19 +595,8 @@ if __name__ == '__main__':
         }
     } #Representa la estructura de un mundo consistente
     mundo = kworld()
-    #mundo.exporta_mundo('cosa.json', True)
     mundo.conmuta_pared((1, 1), 'norte')
     mundo.conmuta_pared((1, 1), 'este')
-    #mundo.conmuta_pared((8, 8), 'norte')
-    #mundo.conmuta_pared((1, 1), 'norte')
-    #mundo.avance_valido()
-    #mundo.avanza()
-    #mundo.avanza()
-    #mundo.avanza()
-    #mundo.avanza()
-    #print mundo.coge_zumbador()
-    #mundo.deja_zumbador()
-    #mundo.gira_izquierda()
     mundo.pon_zumbadores((5, 5), -1)
     mundo.pon_zumbadores((2, 1), 15)
     mundo.pon_zumbadores((1, 1), 7)
@@ -581,8 +605,4 @@ if __name__ == '__main__':
         mundo.gira_izquierda()
     mundo.avanza()
 
-    #pprint(mundo.mundo)
-    #mundo.exporta_mundo('mundo.json', True)
-    #mundo.carga_archivo(file('cosa.json'))
-    #mundo.exporta_mundo('cosa.json', True)
     print mundo

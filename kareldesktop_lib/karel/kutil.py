@@ -65,8 +65,9 @@ class kstack(deque):
         """indica si el id indicado está en el tope de la pila"""
         if self.is_empty():
             return False
-        for i in self.top():#itera sobre la única llave
-            return self.top()[i]['id'] == id
+        ultimo = self.top()
+        if ultimo.has_key('id'):
+            return ultimo['id'] == id
 
 class KarelException(Exception):
     """ Define un error sintactico de Karel """

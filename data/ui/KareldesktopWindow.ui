@@ -715,6 +715,7 @@ del lenguaje de Karel</property>
                         <property name="can_focus">True</property>
                         <property name="invisible_char">●</property>
                         <property name="width_chars">6</property>
+                        <property name="text" translatable="yes">0</property>
                         <property name="placeholder_text">0</property>
                       </object>
                       <packing>
@@ -756,9 +757,9 @@ del lenguaje de Karel</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkDrawingArea" id="drawingarea1">
+                  <object class="GtkDrawingArea" id="mundo_canvas">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can_focus">True</property>
                     <property name="events">GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>
                     <signal name="button-press-event" handler="mundo_click" swapped="no"/>
                     <signal name="draw" handler="dibuja_mundo" swapped="no"/>

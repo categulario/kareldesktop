@@ -56,11 +56,19 @@ class klexer(object):
         self.posicion = ktoken.POSICION_INICIO
 
         self.sintaxis = 'pascal' #para la gestion de los comentarios
+        self.lonely_chars = [';', '{', '}', '!', ')']
 
         self.debug = debug
         self.caracter_actual = self.lee_caracter()
         if self.debug:
             print "leyendo archivo '%s'"%self.nombre_archivo
+
+    def establecer_sintaxis(self, sintaxis):
+        """Establece la sintaxis para este análisis"""
+        if sintaxis == 'java':
+            self.lonely_chars += ['(', ')']
+            self.sintaxis = sintaxis
+        self.sintaxis = sintaxis
 
     def lee_caracter(self):
         """Lee un caracter de la fuente o devuelve uno de la pila si no
@@ -177,7 +185,7 @@ class klexer(object):
                         if self.token:
                             self.caracter_actual = self.lee_caracter()
                             break
-                    elif self.caracter_actual == '*' and self.ultimo_caracter == '/':
+                    elif self.caracter_actual == '*' and self.ultimo_caracter == '/' and self.sintaxis == 'java':
                         self.estado = self.ESTADO_COMENTARIO
                         self.abrir_comentario = '/*'
                         if self.token.endswith('/'):
@@ -193,7 +201,7 @@ class klexer(object):
                         if self.token:
                             self.caracter_actual = self.lee_caracter()
                             break
-                    elif self.caracter_actual in ['(', ';', ')', '{', '}', '!']: #Caracteres que viven solos
+                    elif self.caracter_actual in self.lonely_chars: #Caracteres que viven solos
                         self.estado = self.ESTADO_ESPACIO
                         if self.token:
                             break
