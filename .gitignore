@@ -5,6 +5,7 @@
 
 .bzr
 *.geany
+*.sublime*
 
 # Packages
 *.egg
