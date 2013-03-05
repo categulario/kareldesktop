@@ -105,7 +105,7 @@ class kworld(object):
 
     def establece_mochila(self, cantidad):
         """Establece los zumbadores en la mochila de karel a cierta cantidad"""
-        if cantidad == 'inf' or cantidad == '-1':
+        if cantidad == 'inf' or cantidad == '-1' or cantidad == -1:
             self.mundo['karel']['mochila'] = -1
         elif type(cantidad) == int:
             if cantidad >= 0:
@@ -140,12 +140,27 @@ class kworld(object):
         """Obtiene la cantidad de zumbadores en la mochila de karel"""
         return self.mundo['karel']['mochila']
 
+    def obten_zumbadores(self, casilla):
+        """Devuelve los zumbadores para esta casilla"""
+        if self.mundo['casillas'].has_key(casilla):
+            return self.mundo['casillas'][casilla]['zumbadores']
+        else:
+            return 0
+
     def conmuta_pared (self, coordenadas, orientacion):
         """ Agrega una pared al mundo, si es que está permitido, el
         atributo 'coordenadas' es una tupla con la fila y columna de la
         casilla afectada, orientacion es una cadena que indica si se pone
         arriba, abajo, a la izquierda o a la derecha. """
         if 0<coordenadas[0]<self.mundo['dimensiones']['filas']+1 and 0<coordenadas[1]<self.mundo['dimensiones']['columnas']+1:
+            if coordenadas[0] == 1 and orientacion == 'sur':
+                return
+            if coordenadas[0] == 100 and orientacion == 'norte':
+                return
+            if coordenadas[1] == 1 and orientacion == 'oeste':
+                return
+            if coordenadas[1] == 100 and orientacion == 'este':
+                return
             agregar = True #Indica si agregamos o quitamos la pared
             if self.mundo['casillas'].has_key(coordenadas):
                 #Puede existir una pared
@@ -194,6 +209,8 @@ class kworld(object):
 
     def pon_zumbadores (self, posicion, cantidad):
         """ Agrega zumbadores al mundo en la posicion dada """
+        if cantidad == 'inf':
+            cantidad = -1
         if 0<posicion[0]<self.mundo['dimensiones']['filas']+1 and 0<posicion[1]<self.mundo['dimensiones']['columnas']+1:
             if self.mundo['casillas'].has_key(posicion):
                 self.mundo['casillas'][posicion]['zumbadores'] = cantidad
@@ -443,10 +460,9 @@ class kworld(object):
 
     def carga_archivo (self, archivo):
         """ Carga el contenido de un archivo con la configuración del
-        mundo. Archivo debe ser una estancia de 'file' o de un objeto
+        mundo. Archivo debe ser una instancia de 'file' o de un objeto
         con metodo 'read()'"""
         mundo = json.load(archivo)
-        #print mundo
         #Lo cargamos al interior
         self.mundo_backup = self.mundo
         try:

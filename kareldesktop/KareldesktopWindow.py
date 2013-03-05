@@ -34,17 +34,19 @@ class KareldesktopWindow(Window):
         self.PreferencesDialog = PreferencesKareldesktopDialog
 
         self.mundo = kworld()
-        self.mundo.establece_karel(posicion=(2, 2), orientacion='este')
-        self.mundo.conmuta_pared((2, 2), 'norte')
-        self.mundo.conmuta_pared((2, 2), 'sur')
-        self.mundo.conmuta_pared((2, 2), 'oeste')
+
         self.primera_fila = 1
         self.primera_columna = 1
+
+        self.borrar_zumbadores = False
 
         # Code for other initialization actions should be added here.
 
     def dibuja_mundo(self, dwarea, context):
         rect = dwarea.get_allocation()
+
+        self.mundo_ancho = rect.width
+        self.mundo_alto = rect.height
 
         def dibuja_karel(origen):#Dibujar a Karel
             context.set_source_rgb(0, 0, 1)
@@ -114,7 +116,7 @@ class KareldesktopWindow(Window):
                 context.set_source_rgb(.4, .4, .4)
                 context.fill()
 
-        #Dibujar las cosas que pertenecen al mundo
+        #Dibujar las cosas que pertenecen al mundo por cada casilla
         num_fila = 1 #Posicion relativa a la pantalla
         num_columna = 1 #Posicion relativa a la pantalla
         for fila in xrange(self.primera_fila, self.primera_fila+self.num_filas):
@@ -127,6 +129,7 @@ class KareldesktopWindow(Window):
                     referencia = coordenada(origen.x+(num_columna-1)*30, origen.y-(num_fila-1)*30)
                     dibuja_karel(referencia)
 
+                #Paredes
                 context.set_source_rgb(.1, .1, .1) #Casi negro para las paredes
                 if 'este' in casilla['paredes']:
                     context.rectangle(origen.x+(num_columna-1)*30-1+30, origen.y-(num_fila-1)*30, 4, 30)
@@ -140,6 +143,39 @@ class KareldesktopWindow(Window):
                 if 'norte' in casilla['paredes']:
                     context.rectangle(origen.x+(num_columna-1)*30+1, origen.y-(num_fila-1)*30+27-30, 30, 4)
                     context.fill()
+
+                #Zumbadores
+                if casilla['zumbadores'] == -1 or casilla['zumbadores']>0:
+                    if casilla['zumbadores'] == -1:
+                        context.set_source_rgb(0, 1, 0)
+                        context.rectangle(origen.x+(num_columna-1)*30+8, origen.y-(num_fila-1)*30+8, 16, 12)
+                        context.fill()
+
+                        context.select_font_face('monospace')
+                        context.set_font_size(25)
+                        context.move_to(origen.x+(num_columna-1)*30+9, origen.y-(num_fila-1)*30+23)
+                        context.set_source_rgb(0, 0, 0)
+                        context.show_text('∞')
+                    elif casilla['zumbadores'] < 10:
+                        context.set_source_rgb(0, 1, 0)
+                        context.rectangle(origen.x+(num_columna-1)*30+9, origen.y-(num_fila-1)*30+8, 12, 14)
+                        context.fill()
+
+                        context.select_font_face('monospace')
+                        context.set_font_size(12)
+                        context.move_to(origen.x+(num_columna-1)*30+11, origen.y-(num_fila-1)*30+20)
+                        context.set_source_rgb(0, 0, 0)
+                        context.show_text(str(casilla['zumbadores']))
+                    else:
+                        context.set_source_rgb(0, 1, 0)
+                        context.rectangle(origen.x+(num_columna-1)*30+7, origen.y-(num_fila-1)*30+8, 16, 14)
+                        context.fill()
+
+                        context.select_font_face('monospace')
+                        context.set_font_size(12)
+                        context.move_to(origen.x+(num_columna-1)*30+8, origen.y-(num_fila-1)*30+20)
+                        context.set_source_rgb(0, 0, 0)
+                        context.show_text(str(casilla['zumbadores']))
 
                 num_columna += 1
             num_fila += 1
@@ -229,9 +265,150 @@ class KareldesktopWindow(Window):
             if self.primera_columna > 1:
                 self.primera_columna -= 1
         else: #Pasan otras cosas
-            pass
+            columna = int(event.x/30) + self.primera_columna-1
+            fila = int((self.mundo_alto-event.y)/30) + self.primera_fila-1
+
+            excedente_horizontal = event.x/30 - int(event.x/30)
+            excedente_vertical = (self.mundo_alto-event.y)/30 - int((self.mundo_alto-event.y)/30)
+
+            if 0<fila<101 and 0<columna<101:
+                if event.button == 1:
+                    if .25<excedente_horizontal<.75 and .25<excedente_vertical<.75:
+                        if self.borrar_zumbadores:
+                            self.mundo.pon_zumbadores((fila, columna), 0)
+                        else:
+                            zumbadores = self.mundo.obten_zumbadores((fila, columna))
+                            if zumbadores >= 0:
+                                self.mundo.pon_zumbadores((fila, columna), zumbadores+1)
+                    elif excedente_horizontal > excedente_vertical:
+                        if excedente_horizontal > 1 - excedente_vertical:
+                            self.mundo.conmuta_pared((fila, columna), 'este')
+                        else:
+                            self.mundo.conmuta_pared((fila, columna), 'sur')
+                    else:
+                        if excedente_horizontal > 1 - excedente_vertical:
+                            self.mundo.conmuta_pared((fila, columna), 'norte')
+                        else:
+                            self.mundo.conmuta_pared((fila, columna), 'oeste')
+                elif event.button == 2:
+                    print 'boton medio'
+                elif event.button == 3:
+                    self.coordenadas = (fila, columna)
+                    self.builder.get_object('mundo_canvas_context_menu').popup(None, None, None, None, 3, event.time)
         canvas.queue_draw() #Volvemos a pintar el canvas
-        #if event.x, event.y
+
+    def inf_beeperbag_toggle_toggled(self, event):
+        if event.get_active(): #Activa zumbadores infinitos
+            self.builder.get_object('mochila_entry').set_editable(False)
+            self.mundo.establece_mochila('inf')
+        else: #Zumbadores en númeroo
+            self.builder.get_object('mochila_entry').set_editable(True)
+            self.mundo.establece_mochila(int(self.builder.get_object('mochila_entry').get_text()))
+
+    def mundo_canvas_scroll_event(self, canvas, event):
+        if event.delta_y < 0:
+            if self.primera_fila+self.num_filas-2 < 100:
+                self.primera_fila += 1
+        if event.delta_y > 0:
+            if self.primera_fila > 1:
+                self.primera_fila -= 1
+        if event.delta_x > 0:
+            if self.primera_columna+self.num_columnas-2 < 100:
+                self.primera_columna += 1
+        if event.delta_x < 0:
+            if self.primera_columna > 1:
+                self.primera_columna -= 1
+        canvas.queue_draw()
+
+    def karel_al_este_activate(self, event):
+        self.mundo.establece_karel(self.coordenadas, 'este')
+        event.queue_draw()
+
+    def karel_al_norte_activate(self, event):
+        self.mundo.establece_karel(self.coordenadas, 'norte')
+        event.queue_draw()
+
+    def karel_al_sur_activate(self, event):
+        self.mundo.establece_karel(self.coordenadas, 'sur')
+        event.queue_draw()
+
+    def karel_al_oeste_activate(self, event):
+        self.mundo.establece_karel(self.coordenadas, 'oeste')
+        event.queue_draw()
+
+    def n_zumbadores_item_activate(self, event):
+        self.builder.get_object('n_zumbadores_dialog').show_all()
+
+    def inf_zumbadores_item_activate(self, event):
+        self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+        event.queue_draw()
+
+    def n_zumbadores_aceptar_btn_clicked(self, event):
+        n_zumbadores = event.get_text()
+        try:
+            zumbadores = int(n_zumbadores)
+            if zumbadores == -1:
+                self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+            elif zumbadores >= 0:
+                self.mundo.pon_zumbadores(self.coordenadas, zumbadores)
+        except ValueError:
+            if n_zumbadores == 'inf' or n_zumbadores == 'infinito' or n_zumbadores == 'infinity':
+                self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+
+        self.builder.get_object('n_zumbadores_dialog').hide()
+        self.builder.get_object('mundo_canvas').queue_draw()
+
+    def n_zumbadores_entry_key_release_event_cb(self, entry, event):
+        if event.keyval == 65293:
+            n_zumbadores = entry.get_text()
+            try:
+                zumbadores = int(n_zumbadores)
+                if zumbadores == -1:
+                    self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+                elif zumbadores >= 0:
+                    self.mundo.pon_zumbadores(self.coordenadas, zumbadores)
+            except ValueError:
+                if n_zumbadores == 'inf' or n_zumbadores == 'infinito' or n_zumbadores == 'infinity':
+                    self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+
+            self.builder.get_object('n_zumbadores_dialog').hide()
+            self.builder.get_object('mundo_canvas').queue_draw()
+
+    def n_zumbadores_cancelar_btn_clicked(self, event):
+        self.builder.get_object('n_zumbadores_dialog').hide()
+
+    def btn_borrar_zumbador_toggled(self, event):
+        self.borrar_zumbadores = event.get_active()
+
+    def go_home(self, event):
+        self.primera_fila = 1
+        self.primera_columna = 1
+        event.queue_draw()
+
+    def mundo_abrir(self, event):
+        event.show_all()
+
+    def mundo_abrir_cancelar(self, event):
+        event.hide()
+
+    def mundo_abrir_aceptar(self, event):
+        archivo = event.get_filename()
+
+        if archivo is not None: #Tiene una ruta válida
+            f = file(archivo)
+            self.mundo.carga_archivo(f)
+            self.builder.get_object('mundo_canvas').queue_draw()
+
+        event.hide()
+
+    def mochila_entry_changed(self, event):
+        texto = event.get_text()
+        try:
+            mochila = int(texto)
+            self.mundo.establece_mochila(mochila)
+        except ValueError:
+            if texto != '':
+                event.set_text('0')
 
     def gtk_main_quit(self, componente):
         Gtk.main_quit()
