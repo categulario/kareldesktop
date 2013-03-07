@@ -14,7 +14,260 @@
     <property name="page_increment">20</property>
   </object>
   <object class="GtkAction" id="code_new"/>
-  <object class="GtkTextBuffer" id="buffer_codigo"/>
+  <object class="GtkTextBuffer" id="buffer_codigo">
+    <property name="tag_table">codigo_text_tag_table</property>
+    <property name="text" translatable="yes">iniciar-programa
+	inicia-ejecucion
+		(*TODO poner algo de codigo aqui*)
+		apagate;
+	termina-ejecucion
+finalizar-programa</property>
+  </object>
+  <object class="GtkTextTagTable" id="codigo_text_tag_table">
+    <child type="tag">
+      <object class="GtkTextTag" id="keyword">
+        <property name="foreground_gdk">#201f4a4a8787</property>
+        <property name="background_rgba">rgb(255,255,255)</property>
+        <property name="foreground_rgba">rgb(0,0,0)</property>
+        <property name="font">monospace 12</property>
+        <property name="family">monospace</property>
+        <property name="paragraph_background_rgba">rgb(255,255,255)</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="identifier">
+        <property name="foreground_gdk">#c1c07d7c1110</property>
+        <property name="background_rgba">rgb(255,255,255)</property>
+        <property name="foreground_rgba">rgb(0,0,0)</property>
+        <property name="font">monospace 12</property>
+        <property name="family">monospace</property>
+        <property name="paragraph_background_rgba">rgb(255,255,255)</property>
+      </object>
+    </child>
+    <child type="tag">
+      <object class="GtkTextTag" id="all">
+        <property name="foreground_gdk">#000000000000</property>
+        <property name="background_rgba">rgb(255,255,255)</property>
+        <property name="foreground_rgba">rgb(0,0,0)</property>
+        <property name="font">monospace 12</property>
+        <property name="family">monospace</property>
+        <property name="paragraph_background_rgba">rgb(255,255,255)</property>
+      </object>
+    </child>
+  </object>
+  <object class="GtkDialog" id="confirm_dialog">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Confirma la acción</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="urgency_hint">True</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox3">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area3">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="confirm_dialog_cancelar">
+                <property name="label">gtk-cancel</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="confirm_dialog_cancelar_clicked" object="confirm_dialog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="confirm_dialog_no">
+                <property name="label">gtk-no</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="confirm_dialog_no_clicked" object="confirm_dialog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="confirm_dialog_si">
+                <property name="label">gtk-yes</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="confirm_dialog_si_clicked" object="confirm_dialog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="box5">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkImage" id="image10">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="pixbuf">kareldesktop.svg</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="confirm_dialog_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">label</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">confirm_dialog_cancelar</action-widget>
+      <action-widget response="0">confirm_dialog_no</action-widget>
+      <action-widget response="0">confirm_dialog_si</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkDialog" id="general_dialog">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Mensaje!</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="icon">kareldesktop.svg</property>
+    <property name="type_hint">dialog</property>
+    <property name="urgency_hint">True</property>
+    <property name="has_resize_grip">False</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox2">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkBox" id="box4">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkImage" id="image9">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="pixbuf">kareldesktop.svg</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="general_dialog_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">label</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area2">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkButton" id="general_dialog_aceptar">
+                <property name="label">gtk-ok</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="general_dialog_aceptar_clicked" object="general_dialog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">general_dialog_aceptar</action-widget>
+    </action-widgets>
+  </object>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -59,8 +312,8 @@
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Karel el Robot</property>
     <property name="window_position">center</property>
-    <property name="default_width">600</property>
-    <property name="default_height">400</property>
+    <property name="default_width">700</property>
+    <property name="default_height">450</property>
     <property name="hide_titlebar_when_maximized">True</property>
     <property name="icon">../media/kareldesktop.svg</property>
     <child>
@@ -304,6 +557,7 @@ del lenguaje de Karel</property>
                         <property name="image">image7</property>
                         <property name="use_stock">False</property>
                         <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK | GDK_MOD1_MASK"/>
+                        <signal name="activate" handler="mundo_guardar" object="world_save_dialog" swapped="no"/>
                       </object>
                     </child>
                     <child>
@@ -469,6 +723,7 @@ del lenguaje de Karel</property>
                 <property name="label" translatable="yes">Salva el mundo</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image5</property>
+                <signal name="clicked" handler="mundo_guardar" object="world_save_dialog" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -656,7 +911,7 @@ del lenguaje de Karel</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkTextView" id="textview1">
+                          <object class="GtkTextView" id="code_textview">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="has_focus">True</property>
@@ -966,6 +1221,17 @@ del lenguaje de Karel</property>
         <signal name="activate" handler="inf_zumbadores_item_activate" object="mundo_canvas" swapped="no"/>
       </object>
     </child>
+    <child>
+      <object class="GtkMenuItem" id="zero_zumbadores_item">
+        <property name="use_action_appearance">False</property>
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="tooltip_text" translatable="yes">Quita todos los zumbadores de esta casilla</property>
+        <property name="label" translatable="yes">0 zumbadores</property>
+        <property name="use_underline">True</property>
+        <signal name="activate" handler="zero_zumbadores_item_activate" object="mundo_canvas" swapped="no"/>
+      </object>
+    </child>
   </object>
   <object class="GtkDialog" id="n_zumbadores_dialog">
     <property name="can_focus">False</property>
@@ -1114,7 +1380,7 @@ del lenguaje de Karel</property>
                 <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="receives_default">False</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="mundo_abrir_cancelar" object="world_open_dialog" swapped="no"/>
@@ -1131,6 +1397,7 @@ del lenguaje de Karel</property>
                 <property name="use_action_appearance">False</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
@@ -1175,7 +1442,13 @@ del lenguaje de Karel</property>
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="role">GtkFileChooserDialog</property>
+    <property name="modal">True</property>
+    <property name="default_width">520</property>
+    <property name="default_height">360</property>
+    <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
+    <property name="urgency_hint">True</property>
+    <property name="action">save</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="filechooserdialog-vbox2">
         <property name="can_focus">False</property>
@@ -1186,10 +1459,38 @@ del lenguaje de Karel</property>
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <placeholder/>
+              <object class="GtkButton" id="world_save_cancelar">
+                <property name="label">gtk-cancel</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="mundo_guardar_cancelar" object="world_save_dialog" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkButton" id="world_save_aceptar">
+                <property name="label">gtk-save</property>
+                <property name="use_action_appearance">False</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="has_default">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_action_appearance">False</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
           <packing>
@@ -1213,5 +1514,9 @@ del lenguaje de Karel</property>
         </child>
       </object>
     </child>
+    <action-widgets>
+      <action-widget response="0">world_save_cancelar</action-widget>
+      <action-widget response="0">world_save_aceptar</action-widget>
+    </action-widgets>
   </object>
 </interface>

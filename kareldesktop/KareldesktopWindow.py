@@ -8,6 +8,7 @@ from gettext import gettext as _
 gettext.textdomain('kareldesktop')
 
 from gi.repository import Gtk # pylint: disable=E0611
+from collections import deque
 import logging
 logger = logging.getLogger('kareldesktop')
 
@@ -40,7 +41,22 @@ class KareldesktopWindow(Window):
 
         self.borrar_zumbadores = False
 
-        # Code for other initialization actions should be added here.
+        #Cosas del menejo de archivos
+        self.nombre_archivo_mundo = ''
+        self.mundo_guardado = True
+
+        self.nombre_archivo_codigo = ''
+        self.codigo_guardado = True
+
+        #Un componente de la interfaz para los dialogos
+        self.RESPUESTA_SI = 'si'
+        self.RESPUESTA_NO = 'no'
+        self.RESPUESTA_CANCELAR = 'cancelar'
+        self.respuesta = self.RESPUESTA_SI #Puede ser 'no' o 'cancelar'
+
+        self.pila_funciones = deque() # Se encarga de gestionar las funciones ligadas
+
+        # Manejadores del canvas del mundo
 
     def dibuja_mundo(self, dwarea, context):
         rect = dwarea.get_allocation()
@@ -246,6 +262,13 @@ class KareldesktopWindow(Window):
         context.close_path()
         context.fill()
 
+        #Actualizamos el indicador de zumbadores
+        if self.mundo.obten_mochila() == -1:
+            self.builder.get_object('inf_beeperbag_toggle').set_active(True)
+        else:
+            self.builder.get_object('mochila_entry').set_text(str(self.mundo.obten_mochila()))
+        self.set_title(['* - ', ''][self.codigo_guardado]+' %s [Karel] %s '%(self.nombre_archivo_codigo.split('/')[-1], self.nombre_archivo_mundo.split('/')[-1])+['*', ''][self.mundo_guardado])
+
     def mundo_click(self, canvas, event):
         """Maneja los clicks en el mundo"""
         if (self.tamanio_mundo.x-50)<=event.x<=(self.tamanio_mundo.x-20) and 10<=event.y<=40:
@@ -290,20 +313,13 @@ class KareldesktopWindow(Window):
                             self.mundo.conmuta_pared((fila, columna), 'norte')
                         else:
                             self.mundo.conmuta_pared((fila, columna), 'oeste')
+                    self.mundo_guardado = False
                 elif event.button == 2:
                     print 'boton medio'
                 elif event.button == 3:
                     self.coordenadas = (fila, columna)
                     self.builder.get_object('mundo_canvas_context_menu').popup(None, None, None, None, 3, event.time)
         canvas.queue_draw() #Volvemos a pintar el canvas
-
-    def inf_beeperbag_toggle_toggled(self, event):
-        if event.get_active(): #Activa zumbadores infinitos
-            self.builder.get_object('mochila_entry').set_editable(False)
-            self.mundo.establece_mochila('inf')
-        else: #Zumbadores en númeroo
-            self.builder.get_object('mochila_entry').set_editable(True)
-            self.mundo.establece_mochila(int(self.builder.get_object('mochila_entry').get_text()))
 
     def mundo_canvas_scroll_event(self, canvas, event):
         if event.delta_y < 0:
@@ -319,6 +335,16 @@ class KareldesktopWindow(Window):
             if self.primera_columna > 1:
                 self.primera_columna -= 1
         canvas.queue_draw()
+
+        # Componentes de la interfaz relativos al mundo
+
+    def inf_beeperbag_toggle_toggled(self, event):
+        if event.get_active(): #Activa zumbadores infinitos
+            self.builder.get_object('mochila_entry').set_editable(False)
+            self.mundo.establece_mochila('inf')
+        else: #Zumbadores en númeroo
+            self.builder.get_object('mochila_entry').set_editable(True)
+            self.mundo.establece_mochila(int(self.builder.get_object('mochila_entry').get_text()))
 
     def karel_al_este_activate(self, event):
         self.mundo.establece_karel(self.coordenadas, 'este')
@@ -341,6 +367,10 @@ class KareldesktopWindow(Window):
 
     def inf_zumbadores_item_activate(self, event):
         self.mundo.pon_zumbadores(self.coordenadas, 'inf')
+        event.queue_draw()
+
+    def zero_zumbadores_item_activate(self, event):
+        self.mundo.pon_zumbadores(self.coordenadas, 0)
         event.queue_draw()
 
     def n_zumbadores_aceptar_btn_clicked(self, event):
@@ -380,13 +410,22 @@ class KareldesktopWindow(Window):
     def btn_borrar_zumbador_toggled(self, event):
         self.borrar_zumbadores = event.get_active()
 
+        #Otros componentes de la interfaz
+
     def go_home(self, event):
         self.primera_fila = 1
         self.primera_columna = 1
         event.queue_draw()
 
     def mundo_abrir(self, event):
-        event.show_all()
+        if not self.mundo_guardado:
+            self.show_confirm(
+                '¿Quieres guardar el mundo anterior antes de abrir uno nuevo?',
+                self.mundo_guardar,
+                event.show_all
+            )
+        else:
+            event.show_all()
 
     def mundo_abrir_cancelar(self, event):
         event.hide()
@@ -395,10 +434,32 @@ class KareldesktopWindow(Window):
         archivo = event.get_filename()
 
         if archivo is not None: #Tiene una ruta válida
-            f = file(archivo)
-            self.mundo.carga_archivo(f)
-            self.builder.get_object('mundo_canvas').queue_draw()
+            try:
+                f = file(archivo)
+            except IOError:
+                self.show_dialog('No se puede leer este archivo')
+            else:
+                if self.mundo.carga_archivo(f):
+                    self.nombre_archivo_mundo = archivo
+                    self.mundo_guardado = True
+                    self.builder.get_object('mundo_canvas').queue_draw()
+                    #Ahora gestiona los zumbadores en la mochila
+                    if self.mundo.obten_mochila() == -1:
+                        self.builder.get_object('inf_beeperbag_toggle').set_active(True)
+                    else:
+                        self.builder.get_object('mochila_entry').set_text(str(self.mundo.obten_mochila()))
+                else:
+                    self.show_dialog('No es un archivo de mundo válido')
 
+        event.hide()
+
+    def mundo_guardar(self, event=None):
+        if self.nombre_archivo_mundo != '':
+            pass
+        else:
+            self.builder.get_object('world_save_dialog').show_all()
+
+    def mundo_guardar_cancelar(self, event):
         event.hide()
 
     def mochila_entry_changed(self, event):
@@ -409,6 +470,40 @@ class KareldesktopWindow(Window):
         except ValueError:
             if texto != '':
                 event.set_text('0')
+
+        #Dialogo general y de confirmacion
+
+    def show_dialog(self, message):
+        self.builder.get_object('general_dialog_label').set_text(message)
+        self.builder.get_object('general_dialog').show_all()
+
+    def general_dialog_aceptar_clicked(self, event):
+        event.hide()
+
+    def show_confirm(self, message, funcion_si, funcion_final):
+        """Muestra un diálogo de confirmacion y apunta la funcion
+        indicada para ejecutarse en caso afirmativo"""
+        self.builder.get_object('confirm_dialog_label').set_text(message)
+        self.builder.get_object('confirm_dialog').show_all()
+
+        self.pila_funciones.append(funcion_final)
+        self.pila_funciones.append(funcion_si)
+
+    def confirm_dialog_cancelar_clicked(self, event):
+        event.hide()
+
+    def confirm_dialog_no_clicked(self, event):
+        self.pila_funciones.pop() #botamos la última función de la pila que correspondía al si
+        event.hide()
+        funcion = self.pila_funciones.pop()
+        funcion()
+
+    def confirm_dialog_si_clicked(self, event):
+        funcion = self.pila_funciones.pop()
+        event.hide()
+        funcion()
+
+        #Bucle principal
 
     def gtk_main_quit(self, componente):
         Gtk.main_quit()
