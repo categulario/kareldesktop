@@ -568,6 +568,7 @@ del lenguaje de Karel</property>
                         <property name="label" translatable="yes">Guardar como</property>
                         <property name="use_underline">True</property>
                         <accelerator key="s" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK | GDK_MOD1_MASK"/>
+                        <signal name="activate" handler="mundo_guardar_como" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -690,6 +691,7 @@ del lenguaje de Karel</property>
                 <property name="label" translatable="yes">Nuevo mundo</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">image1</property>
+                <signal name="clicked" handler="mundo_nuevo" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -752,6 +754,7 @@ del lenguaje de Karel</property>
                 <property name="label" translatable="yes">Inicializar</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-refresh</property>
+                <signal name="clicked" handler="mundo_regresar" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -796,22 +799,6 @@ del lenguaje de Karel</property>
                 <property name="label" translatable="yes">Ejecutar</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-media-play</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="btnPrevious">
-                <property name="use_action_appearance">False</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="tooltip_text" translatable="yes">Anterior</property>
-                <property name="use_action_appearance">False</property>
-                <property name="label" translatable="yes">Anterior</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-media-previous</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1087,10 +1074,10 @@ del lenguaje de Karel</property>
                 <child>
                   <object class="GtkDrawingArea" id="mundo_canvas">
                     <property name="visible">True</property>
+                    <property name="app_paintable">True</property>
                     <property name="can_focus">True</property>
                     <property name="events">GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_MOTION_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON2_MOTION_MASK | GDK_BUTTON3_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_FOCUS_CHANGE_MASK | GDK_STRUCTURE_MASK | GDK_PROPERTY_CHANGE_MASK | GDK_VISIBILITY_NOTIFY_MASK | GDK_PROXIMITY_IN_MASK | GDK_PROXIMITY_OUT_MASK | GDK_SUBSTRUCTURE_MASK | GDK_SCROLL_MASK | GDK_TOUCH_MASK | GDK_SMOOTH_SCROLL_MASK</property>
                     <property name="has_tooltip">True</property>
-                    <property name="tooltip_text" translatable="yes">Mundo de Karel!</property>
                     <signal name="button-press-event" handler="mundo_click" swapped="no"/>
                     <signal name="draw" handler="dibuja_mundo" swapped="no"/>
                     <signal name="scroll-event" handler="mundo_canvas_scroll_event" swapped="no"/>
@@ -1443,12 +1430,15 @@ del lenguaje de Karel</property>
     <property name="border_width">5</property>
     <property name="role">GtkFileChooserDialog</property>
     <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
     <property name="default_width">520</property>
     <property name="default_height">360</property>
     <property name="destroy_with_parent">True</property>
     <property name="type_hint">dialog</property>
     <property name="urgency_hint">True</property>
     <property name="action">save</property>
+    <property name="do_overwrite_confirmation">True</property>
+    <property name="filter">world_open_filefilter</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="filechooserdialog-vbox2">
         <property name="can_focus">False</property>
@@ -1485,6 +1475,7 @@ del lenguaje de Karel</property>
                 <property name="receives_default">True</property>
                 <property name="use_action_appearance">False</property>
                 <property name="use_stock">True</property>
+                <signal name="clicked" handler="mundo_guardar_aceptar" object="world_save_dialog" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
